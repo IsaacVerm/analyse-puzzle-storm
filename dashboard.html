@@ -1,35 +1,60 @@
 <!doctype html>
 <html>
-  <head>
+
+<head>
     <title>Embedding Vega-Lite</title>
     <script src="https://cdn.jsdelivr.net/npm/vega@6.0.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-lite@6.1.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.29.0"></script>
-  </head>
-  <body>
+</head>
+
+<body>
     <h1>Have I improved at solving Puzzle Storm puzzles over time?</h1>
+    <p>The id of a run is the id of the first puzzle played in that run.</p>
     <div id="vis"></div>
     <p>The average number of correct puzzles keeps hovering around 20. Nothing seems to have changed over time.</p>
 
     <script type="text/javascript">
-      // need to use the raw githubusercontent url, regular one doesn't work
-      var yourVlSpec = {
-        $schema: "https://vega.github.io/schema/vega-lite/v6.json",
-        description: "A simple bar chart with embedded data.",
-        data: {"url": "https://raw.githubusercontent.com/IsaacVerm/track-puzzle-storm/refs/heads/main/puzzles.csv"},
-        transform: [
-          {
-            calculate: "datum.date + ' ' + datum.time",
-            as: "session_id"
-          }
-        ],
-        mark: "line",
-        encoding: {
-          x: {"field": "session_id", "sort": "date", "axis": {"title": "run"}},
-          y: {"field": "solved", "aggregate": "sum", "axis": {"title": "number of puzzles solved in run"}},
-        },
-      };
-      vegaEmbed('#vis', yourVlSpec);
+        // need to use the raw githubusercontent url, regular one doesn't work
+        var yourVlSpec = {
+            $schema: "https://vega.github.io/schema/vega-lite/v6.json",
+            description: "A simple bar chart with embedded data.",
+            data: { "url": "https://raw.githubusercontent.com/IsaacVerm/track-puzzle-storm/refs/heads/main/puzzles.csv" },
+            transform: [
+                {
+                    calculate: "datum.date + ' ' + datum.time",
+                    as: "date_time"
+                },
+                {
+                    window: [
+                        {
+                            op: "min",
+                            field: "rowid", // Assuming rowid exists in your data
+                            as: "session_id"
+                        }
+                    ],
+                    groupby: ["date_time"]
+                },
+                {
+                    calculate: "toNumber(datum.session_id)",
+                    as: "session_id_num"
+                }
+            ],
+            mark: "line",
+            encoding: {
+                x: { "field": "session_id",
+                     "type": "ordinal",
+                     "axis": { "title": "run" },
+                     "sort": {"field": "session_id_num", "order": "ascending"}
+                    },
+                y: { "field": "solved",
+                     "aggregate": "sum",
+                     "axis": { "title": "number of puzzles solved in run" }
+                    },
+            },
+        };
+        vegaEmbed('#vis', yourVlSpec);
     </script>
-  </body>
+</body>
+
 </html>
